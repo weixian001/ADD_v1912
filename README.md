@@ -28,15 +28,15 @@ This version works with OpenFOAM-v1912
 
 * Prepare a directory on your system, e.g.:  
 
-  `mkdir ~/OpenFOAM/ADD-v1912/`
+  `mkdir ~/OpenFOAM/ADD_v1912/`
 
-* Download FPIFoam-v1912 using git:
+* Download ADD_v1912 using git:
 
-  `git clone https://github.com/weixian001/ADD-v1912.git ~/OpenFOAM/ADD-v1912/`
+  `git clone https://github.com/weixian001/ADD_v1912.git ~/OpenFOAM/ADD_v1912/`
 
-* Set an environment variable to the FPIFoam-v1912 src folder:
+* Set an environment variable to the ADD_v1912 src folder:
 
-  `export LIB_ADD=~/OpenFOAM/ADD-v1912/`
+  `export LIB_ADD=~/OpenFOAM/ADD_v1912/`
 
 * Execute `./Allwmake`
 
