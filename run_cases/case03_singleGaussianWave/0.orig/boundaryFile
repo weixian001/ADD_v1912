@@ -1,0 +1,41 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       IOobject;
+    location    "0";
+    object      boundaryFile;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+boundaryField
+{
+    "interface.*"
+    {
+    	type			mixed;
+    	refValue		$dummyValue; // dummy
+    	refGradient		$dummyValue; // dummy
+    	valueFraction	uniform 0.0; // dummy
+    }
+    "(left|right)"
+    {
+    	type			cyclic;
+    }
+    "(top|bottom)"
+    {
+        type            empty;
+    }
+    "(front|back)"
+    {
+        type            empty;
+    }
+}
+
+// ************************************************************************* //

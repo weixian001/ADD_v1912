@@ -1,0 +1,78 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.4.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      topoSetDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+x0 -250;
+x1  250;
+
+y0 -0.5;
+y1  0.5;
+
+z1  0.5;
+z0 -0.5;
+
+Lr  50;
+Ll  50;
+
+actions
+(
+    {
+        name    spongeLayerR;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+		sourceInfo
+		{
+			box (#calc "($x1)-($Lr)" $y0 $z0)
+				($x1                 $y1 $z1);
+		}
+    }
+    
+    {
+        name    spongeZoneR;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+		sourceInfo
+		{
+		   set	spongeLayerR;
+		}
+    }
+    
+    {
+        name    spongeLayerL;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+		sourceInfo
+		{
+			box ($x0                 $y0 $z0)
+				(#calc "($x0)+($Ll)" $y1 $z1);
+		}
+    }
+    
+    {
+        name    spongeZoneL;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+		sourceInfo
+		{
+		   set	spongeLayerL;
+		}
+    }  
+);
+
+// ************************************************************************* //

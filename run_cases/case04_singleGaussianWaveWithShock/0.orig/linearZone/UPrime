@@ -1,0 +1,70 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.4.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    location    "0/linearZone";
+    object      UPrime;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+internalField   #codeStream
+{
+	codeInclude
+    #{
+        #include "fvCFD.H"
+    #};
+    
+    codeOptions
+    #{
+        -I$(LIB_SRC)/finiteVolume/lnInclude \
+        -I$(LIB_SRC)/meshTools/lnInclude \
+        -I$(FOAM_CASE)/0
+    #};
+
+    code
+    #{
+        const IOdictionary& d = static_cast<const IOdictionary&>(dict);
+
+        const fvMesh& mesh = refCast<const fvMesh>(d.db());
+        
+		#include "waveProperties.H"
+
+		// Gas properties
+		const scalar R(1.0/1.4), gamma(1.4);
+
+		const scalar rhoMean(pMean/(R*TMean));
+
+		const scalar cSqrMean(gamma*R*TMean);
+		
+		// Velocity perturbation
+		const scalar uPrime(ep/(rhoMean*Foam::sqrt(cSqrMean)));
+
+		vectorField U(mesh.nCells(), vector::zero);
+
+        forAll(U, i)
+        {
+			const vector& xc = mesh.C().internalField()[i];
+			
+			const scalar rp = (xc - xp) & kp;
+
+			U[i][0] += uPrime*Foam::exp(-ap*sqr(rp));
+			//U[i][0] += uPrime*(rp < 0.0 ? 1.0 : Foam::exp(-ap*sqr(rp)));
+        }
+
+		U.writeEntry("", os);
+	#};
+};
+
+#include "boundaryFile"
+
+// ************************************************************************* //

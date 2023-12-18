@@ -1,0 +1,169 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     dualZoneEulerFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         65;
+
+deltaT          0.125; // 0.5*dxNonLinear for CFL=0.5
+
+writeControl    adjustableRunTime;
+
+writeInterval   65;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  12;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   8;
+
+runTimeModifiable true;
+
+adjustTimeStep  no;
+
+maxCo           1.2;
+
+functions
+{
+    energyConservationError
+    {
+        type            coded;
+        libs            ("libutilityFunctionObjects.so");
+        enabled         true;
+        name            energyConservationError;
+        executeControl  writeTime;
+        region			linearZone;
+        codeExecute
+        #{
+            const fvMesh& linMesh = mesh();
+            
+            const Time& runTime = linMesh.time();
+            
+            if (runTime.write())
+            {
+            scalar massDiff(0.0), totVol(0.0), totalEnergy(0.0), eps(1e-5);
+            
+            const volScalarField& rhoMean
+				= linMesh.lookupObject<volScalarField>("rho");
+				
+			const volScalarField& rhoPrime
+				= linMesh.lookupObject<volScalarField>("rhoPrime");
+			
+			const volScalarField& rhoEMean
+				= linMesh.lookupObject<volScalarField>("rhoE");
+			
+			const volScalarField& rhoEPrime
+				= linMesh.lookupObject<volScalarField>("rhoEPrime");
+				
+			volScalarField rhoPrimeErrorLin("rhoPrimeError", rhoPrime);
+				
+			if (linMesh.nCells() > 1)
+			{
+				const volScalarField& cellTypes
+					= linMesh.lookupObject<volScalarField>("cellTypes");
+				
+				forAll(rhoPrime, celli)
+				{
+					if (cellTypes[celli] < 0.5) // CALCULATED
+					{
+						scalar xc = linMesh.C()[celli][0] + 65.0 - runTime.value();
+						
+						while (xc >  100.0) { xc -= 200.0; }
+						while (xc < -100.0) { xc += 200.0; }
+						
+						const scalar rhoPrimeExact = eps*Foam::exp
+						(
+							-Foam::log(2.0)/Foam::sqr(6.0)*sqr(xc)
+						);
+						
+						rhoPrimeErrorLin.primitiveFieldRef()[celli]
+							= mag(rhoPrimeExact - rhoPrime[celli]);
+						
+						massDiff += rhoPrimeErrorLin[celli]*linMesh.V()[celli];
+							   
+						totalEnergy
+							+= rhoEPrime.primitiveField()[celli]*linMesh.V()[celli];
+							   
+						totVol += linMesh.V()[celli];
+					}
+				}
+			}
+			
+			const fvMesh& nonLinMesh
+				= runTime.lookupObject<fvMesh>("nonLinearZone");
+				
+			const volScalarField& rho
+				= nonLinMesh.lookupObject<volScalarField>("rho");
+				
+			const volScalarField& rhoE
+				= nonLinMesh.lookupObject<volScalarField>("rhoE");
+				
+			volScalarField rhoPrimeError("rhoPrimeError", rho);
+			
+			if (nonLinMesh.nCells() > 1)
+			{
+				forAll(rho, celli)
+				{
+					scalar xc = nonLinMesh.C()[celli][0] + 65.0 - runTime.value();
+						
+					while (xc >  100.0) { xc -= 200.0; }
+					while (xc < -100.0) { xc += 200.0; }
+					
+					const scalar rhoExact
+					= rhoMean[0] + eps*Foam::exp
+					(
+						-Foam::log(2.0)/Foam::sqr(6.0)*sqr(xc)
+					);
+					
+					rhoPrimeError.primitiveFieldRef()[celli]
+							= mag(rhoExact - rho[celli]);
+							
+					massDiff +=rhoPrimeError[celli]*nonLinMesh.V()[celli];
+							
+					totalEnergy
+						+= (rhoE.primitiveField()[celli] - rhoEMean[0])
+						   *nonLinMesh.V()[celli];
+								
+					totVol += nonLinMesh.V()[celli];
+				}
+			}
+			
+			rhoPrimeErrorLin.write();
+			
+			rhoPrimeError.write();
+			
+			Info<< "MassError: " << massDiff << "/" << totVol
+				<< " = " << massDiff/totVol << endl;
+			
+			Info<< "TotalEnergy: " << totalEnergy << endl;
+			}
+        #};
+    }
+}
+
+// ************************************************************************* //

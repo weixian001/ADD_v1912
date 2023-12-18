@@ -1,0 +1,4 @@
+SOURCE = \
+dualZoneEulerFoam.C \
+
+# sources

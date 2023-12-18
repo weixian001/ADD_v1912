@@ -1,0 +1,67 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.4.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    location    "0/nonLinearZone";
+    object      U;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 -1 0 0 0 0];
+
+#include "../../RayleighFlowProperties.H"
+
+lvalue ($lu 0 0);
+rvalue ($ru 0 0);
+
+internalField   #codeStream
+{
+	codeInclude
+    #{
+        #include "fvCFD.H"
+    #};
+    
+    codeOptions
+    #{
+        -I$(LIB_SRC)/finiteVolume/lnInclude \
+        -I$(LIB_SRC)/meshTools/lnInclude
+    #};
+
+    code
+    #{
+        const IOdictionary& d = static_cast<const IOdictionary&>(dict);
+
+        const fvMesh& mesh = refCast<const fvMesh>(d.db());
+        
+		vectorField U(mesh.nCells(), vector($lu, 0, 0));
+		
+		const scalar du($ru - $lu);
+
+		for(register label i = 0; i < $nCells; i++)
+		{
+			const scalar x((scalar(i) + 0.5)/$nCells);
+			
+			U[$offset + i][0] += du*(10.0 - (15.0 - 6.0*x)*x)*pow3(x);
+		}
+
+		for(register label celli = $offset + $nCells; celli < mesh.nCells(); celli++)
+		{
+			U[celli][0] = $ru;
+		}
+		
+		U.writeEntry("", os);
+	#};
+};
+
+
+#include "boundaryFile"
+
+// ************************************************************************* //

@@ -1,0 +1,160 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     dualZoneEulerFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         220;
+
+deltaT          5e-2;
+
+writeControl    adjustableRunTime;
+
+writeInterval   5;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  12;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   8;
+
+runTimeModifiable true;
+
+adjustTimeStep  no;
+
+maxCo           1.2;
+
+functions
+{
+    rhoPrimeError
+    {
+        type            coded;
+        libs            ("libutilityFunctionObjects.so");
+        enabled         true;
+        name            rhoPrimeError;
+        executeControl  writeTime;
+        region			linearZone;
+        codeExecute
+        #{
+            const fvMesh& linMesh = mesh();
+            
+            const Time& runTime = linMesh.time();
+            
+            if (runTime.write())
+            {
+			// Pressure wave properties
+			const scalar xp1(-165.0 + 1.5*runTime.value());   // location
+			const scalar ep1(5e-6);                           // strength
+			const scalar ap1(Foam::log(2.0)/Foam::sqr(12.0)); // width
+			
+			const scalar xp2( 55.0 - 0.5*runTime.value());    // location
+			const scalar ep2(1e-5);                           // strength
+			const scalar ap2(Foam::log(2.0)/Foam::sqr(8.0));  // width
+			
+			// Entropy wave properties
+			const scalar xe1(-55.0 + 0.5*runTime.value());    // location
+			const scalar ee1(-5e-6);                          // strength
+			const scalar ae1(Foam::log(2.0)/Foam::sqr(8.0));  // width
+			
+			const volScalarField& rhoMean
+				= linMesh.lookupObject<volScalarField>("rho");
+				
+			const volScalarField& rhoPrime
+				= linMesh.lookupObject<volScalarField>("rhoPrime");
+				
+			const volScalarField& cellTypes
+				= linMesh.lookupObject<volScalarField>("cellTypes");
+				
+			scalar massDiff(0.0), totVol(0.0);
+			
+			volScalarField rhoPrimeErrorLin("rhoPrimeError", rhoPrime);
+			
+			forAll(rhoPrime, celli)
+			{
+				if (cellTypes[celli] < 0.5) // CALCULATED
+				{
+					const scalar& xc = linMesh.C()[celli][0];
+					
+					const scalar rhoPrimeExact
+					(
+						  ep1*Foam::exp(-ap1*sqr(xc - xp1))
+						+ ep2*Foam::exp(-ap2*sqr(xc - xp2))
+						+ ee1*Foam::exp(-ae1*sqr(xc - xe1))
+					);
+					
+					rhoPrimeErrorLin.primitiveFieldRef()[celli]
+						= mag(rhoPrimeExact - rhoPrime.primitiveField()[celli]);
+						
+					massDiff += rhoPrimeErrorLin[celli]*linMesh.V()[celli];
+						   
+					totVol += linMesh.V()[celli];
+				}
+			}
+			
+			const fvMesh& nonLinMesh
+				= runTime.lookupObject<fvMesh>("nonLinearZone");
+				
+			const volScalarField& rho
+				= nonLinMesh.lookupObject<volScalarField>("rho");
+				
+			volScalarField rhoPrimeError("rhoPrimeError", rho);
+			
+			if (nonLinMesh.nCells() > 1)
+			{
+				forAll(rho, celli)
+				{
+					const scalar& xc = nonLinMesh.C()[celli][0];
+						
+					const scalar rhoExact
+					(
+						  rhoMean[0]
+						+ ep1*Foam::exp(-ap1*sqr(xc - xp1))
+						+ ep2*Foam::exp(-ap2*sqr(xc - xp2))
+						+ ee1*Foam::exp(-ae1*sqr(xc - xe1))
+					);
+					
+					rhoPrimeError.primitiveFieldRef()[celli]
+							= mag(rhoExact - rho.primitiveField()[celli]);
+					
+					massDiff += rhoPrimeError[celli]*nonLinMesh.V()[celli];
+								
+					totVol += nonLinMesh.V()[celli];
+				}
+			}
+			
+			rhoPrimeErrorLin.write();
+			
+			rhoPrimeError.write();
+			
+			Info<< "MassError: " << massDiff << "/" << totVol
+				<< " = " << massDiff/totVol << endl;
+			}
+        #};
+    }
+}
+
+// ************************************************************************* //

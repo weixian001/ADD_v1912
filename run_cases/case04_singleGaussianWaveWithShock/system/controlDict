@@ -1,0 +1,100 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     dualZoneEulerFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         50;
+
+deltaT          2.5e-4; // M1.5: 2.5e-4, M3: 1.25e-4, M5: 1e-4
+
+writeControl    adjustableRunTime;
+
+writeInterval   1;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  12;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+adjustTimeStep  no;
+
+maxCo           1.2;
+
+functions
+{
+	pPrimeMax
+	{
+		type				fieldMinMax;
+		libs				("libfieldFunctionObjects.so");
+
+		region				linearZone;
+		fields				(pPrime);
+		location			no;
+		
+		executeControl      timeStep;
+        executeInterval     1;
+        writeControl        timeStep;
+	}
+	
+	/*totalEnergyLin
+	{
+		type				volFieldValue;
+		libs				("libfieldFunctionObjects.so");
+		fields				(rhoE rhoEPrime);
+		writeFields			no;
+		region				linearZone;
+		
+		regionType      	all;
+		operation      		volIntegrate;
+		
+		executeControl      timeStep;
+        executeInterval     10;
+        writeControl        timeStep;
+	}
+	
+	totalEnergyNonLin
+	{
+		type				volFieldValue;
+		libs				("libfieldFunctionObjects.so");
+		fields				(rhoE);
+		writeFields			no;
+		region				nonLinearZone;
+		
+		regionType      	all;
+		operation      		volIntegrate;
+		
+		executeControl      timeStep;
+        executeInterval     10;
+        writeControl        timeStep;
+	}*/
+}
+
+// ************************************************************************* //

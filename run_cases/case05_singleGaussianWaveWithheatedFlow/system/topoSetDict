@@ -1,0 +1,128 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.4.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      topoSetDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+x0 -120;
+x1  100;
+
+y0 -100;
+y1  100;
+
+z1  0.5;
+z0 -0.5;
+
+L   100;
+Lr  #calc "$x1-$L";
+Ll  #calc "-($x0+$L)";
+Lt  #calc "$y1-$L";
+Lb  #calc "-($y0+$L)";
+
+
+actions
+(
+    {
+        name    spongeLayerR;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+		sourceInfo
+		{
+			box (#calc "($x1)-($Lr)" #calc "$y0" $z0)
+				($x1                 #calc "$y1" $z1);
+		}
+    }
+    
+    {
+        name    spongeZoneR;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+		sourceInfo
+		{
+		   set	spongeLayerR;
+		}
+    }
+    
+    {
+        name    spongeLayerL;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+		sourceInfo
+		{
+			box ($x0                 #calc "$y0" $z0)
+				(#calc "($x0)+($Ll)" #calc "$y1" $z1);
+		}
+    }
+    
+    {
+        name    spongeZoneL;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+		sourceInfo
+		{
+		   set	spongeLayerL;
+		}
+    }
+    
+    {
+        name    spongeLayerT;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+		sourceInfo
+		{
+			box (#calc "$x0" #calc "($y1)-($Lt)" $z0)
+				(#calc "$x1" $y1                 $z1);
+		}
+    }
+    
+    {
+        name    spongeZoneT;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+		sourceInfo
+		{
+		   set	spongeLayerT;
+		}
+    }
+    
+    {
+        name    spongeLayerB;
+        type    cellSet;
+        action  new;
+        source  boxToCell;
+		sourceInfo
+		{
+			box (#calc "$x0" $y0                 $z0)
+				(#calc "$x1" #calc "($y0)+($Lb)" $z1);
+		}
+    }
+    
+    {
+        name    spongeZoneB;
+        type    cellZoneSet;
+        action  new;
+        source  setToCellZone;
+		sourceInfo
+		{
+		   set	spongeLayerB;
+		}
+    }    
+);
+
+// ************************************************************************* //

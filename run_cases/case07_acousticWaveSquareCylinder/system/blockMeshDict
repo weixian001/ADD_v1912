@@ -1,0 +1,261 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale  1;
+
+// Height/width of rectangular cylinder
+w	0.25;
+h	0.25;
+
+// Domain
+WL  #calc "16*$w";
+HL  #calc "16*$w";
+W	#calc "2*$w";
+H	#calc "2*$w";
+
+// Position of cylinder centre
+Hs	#calc "0.5*$HL";
+
+// Resolution
+dx  #calc "$w/40";
+dxl	#calc "2*$dx";
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+x0		#calc "-0.5*$W";
+x1		#calc "-0.5*$w";
+x2		#calc " 0.5*$w";
+x3		#calc " 0.5*$W";
+
+y0		#calc "-0.5*$H";
+y1		#calc "-0.5*$h";
+y2		#calc " 0.5*$h";
+y3		#calc " 0.5*$H";
+
+xl0		#calc "-0.5*$WL";
+xl1		#calc " 0.5*$WL";
+
+yl0		#calc "-0.5*$HL";
+yl1		#calc " 0.5*$HL";
+
+z0		-0.5;
+z1		 0.5;
+
+vertices
+(
+    // Nonlinear Zone
+    ($x0 $y0 $z0) // 0
+    ($x1 $y0 $z0) // 1
+    ($x2 $y0 $z0) // 2 
+    ($x3 $y0 $z0) // 3
+    
+    ($x0 $y1 $z0) // 4
+    ($x1 $y1 $z0) // 5
+    ($x2 $y1 $z0) // 6
+    ($x3 $y1 $z0) // 7
+    
+    ($x0 $y2 $z0) // 8
+    ($x1 $y2 $z0) // 9
+    ($x2 $y2 $z0) // 10
+    ($x3 $y2 $z0) // 11
+    
+    ($x0 $y3 $z0) // 12
+    ($x1 $y3 $z0) // 13
+    ($x2 $y3 $z0) // 14
+    ($x3 $y3 $z0) // 15
+
+	($x0 $y0 $z1) // 16
+    ($x1 $y0 $z1) // 17
+    ($x2 $y0 $z1) // 18
+    ($x3 $y0 $z1) // 19
+
+    ($x0 $y1 $z1) // 20
+    ($x1 $y1 $z1) // 21
+    ($x2 $y1 $z1) // 22
+    ($x3 $y1 $z1) // 23
+
+    ($x0 $y2 $z1) // 24
+    ($x1 $y2 $z1) // 25
+    ($x2 $y2 $z1) // 26
+    ($x3 $y2 $z1) // 27
+
+    ($x0 $y3 $z1) // 28
+    ($x1 $y3 $z1) // 29
+	($x2 $y3 $z1) // 30
+    ($x3 $y3 $z1) // 31
+    
+    // Linear Zone
+    ($xl0 $yl0 $z0) // 32
+    ($xl1 $yl0 $z0) // 33
+    ($xl1 $yl1 $z0) // 34
+    ($xl0 $yl1 $z0) // 35
+    
+    ($xl0 $yl0 $z1) // 36
+    ($xl1 $yl0 $z1) // 37
+    ($xl1 $yl1 $z1) // 38
+    ($xl0 $yl1 $z1) // 39
+    
+);
+
+nx1 #calc "round((($x1)-($x0))/$dx)";
+nx2 #calc "round((($x2)-($x1))/$dx)";
+nx3 #calc "round((($x3)-($x2))/$dx)";
+
+ny1 #calc "round((($y1)-($y0))/$dx)";
+ny2 #calc "round((($y2)-($y1))/$dx)";
+ny3 #calc "round((($y3)-($y2))/$dx)";
+
+nxl	#calc "round($WL/$dxl)";
+nyl	#calc "round($HL/$dxl)";
+
+blocks
+(
+    // Blk 0
+    hex ( 0  1  5  4 16 17 21 20) nonLinearZone ($nx1 $ny1 1) simpleGrading (1 1 1)
+    
+    // Blk 1
+    hex ( 1  2  6  5 17 18 22 21) nonLinearZone ($nx2 $ny1 1) simpleGrading (1 1 1)
+    
+    // Blk 2
+    hex ( 2  3  7  6 18 19 23 22) nonLinearZone ($nx3 $ny1 1) simpleGrading (1 1 1)
+    
+    // --------------------------------------------------------------------- //
+    
+    // Blk 3
+    hex ( 4  5  9  8 20 21 25 24) nonLinearZone ($nx1 $ny2 1) simpleGrading (1 1 1)
+    
+    // Blk 4
+    hex ( 6  7 11 10 22 23 27 26) nonLinearZone ($nx3 $ny2 1) simpleGrading (1 1 1)
+    
+    // --------------------------------------------------------------------- //
+    
+    // Blk 5
+    hex ( 8  9 13 12 24 25 29 28) nonLinearZone ($nx1 $ny3 1) simpleGrading (1 1 1)
+    
+    // Blk 6
+    hex ( 9 10 14 13 25 26 30 29) nonLinearZone ($nx2 $ny3 1) simpleGrading (1 1 1)
+    
+    // Blk 7
+    hex (10 11 15 14 26 27 31 30) nonLinearZone ($nx3 $ny3 1) simpleGrading (1 1 1)
+    
+    // --------------------------------------------------------------------- //
+    
+    // Blk 8
+    hex (32 33 34 35 36 37 38 39) linearZone ($nxl $nyl 1) simpleGrading (1 1 1)
+);
+
+edges ();
+
+boundary
+(
+    sides
+    {
+    	type		patch;
+    	faces
+    	(
+    		(32 36 39 35) // left
+    		(33 34 38 37) // right
+    		(34 35 39 38) // top
+    		(32 33 37 36) // bottom
+    	);
+    }
+    
+    interfaceL
+    {
+    	type        patch;
+    	faces
+    	(
+    		(0 16 20  4)
+    		(4 20 24  8)
+    		(8 24 28 12)
+    	);
+    }
+    
+    interfaceR
+    {
+    	type        patch;
+    	faces
+    	(
+    		( 3  7 23 19)
+    		( 7 11 27 23)
+    		(11 15 31 27)
+    	);
+    }
+    
+    interfaceT
+    {
+    	type        patch;
+    	faces
+    	(
+    		(12 28 29 13)
+    		(13 29 30 14)
+    		(14 30 31 15)
+    	);
+    }
+    
+    interfaceB
+    {
+    	type        patch;
+    	faces
+    	(
+    		(0 1 17 16)
+    		(1 2 18 17)
+    		(2 3 19 18)
+    	);
+    }
+    
+	frontBack
+    {
+    	type        empty;
+    	faces
+    	(
+    		( 0  4  5  1)
+    		( 1  5  6  2)
+    		( 2  6  7  3)
+    		( 4  8  9  5)
+    		( 6 10 11  7)
+    		( 8 12 13  9)
+    		( 9 13 14 10)
+    		(10 14 15 11)
+    		
+    		(16 17 21 20)
+    		(17 18 22 21)
+    		(18 19 23 22)
+    		(20 21 25 24)
+    		(22 23 27 26)
+    		(24 25 29 28)
+    		(25 26 30 29)
+    		(26 27 31 30)
+    		
+    		(36 37 38 39) // front
+    		(32 35 34 33) // back
+    	);
+    }
+    
+    cylinder
+    {
+    	type		wall;
+    	faces
+    	(
+    		(9 25 26 10)
+    		(5 21 22  6)
+    		(5  9 25 21)
+    		(6 22 26 10)
+    	);
+    }
+);
+
+// ************************************************************************* //

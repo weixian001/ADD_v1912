@@ -1,0 +1,272 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale   1;
+
+pi      3.14159265359;
+
+// Background mesh
+x0  -20;
+x1   20;
+
+y0  -20;
+y1   20;
+
+z0 -0.5;
+z1  0.5;
+
+// Cylinder position & radii
+xc    0;
+yc    0;
+r0    1;
+r1    4;
+
+// Refinement zone position
+xr0  -5;
+xr1  30;
+yr0  -5;
+yr1   5;
+
+// Resolutions
+Rb   2; // background
+Rc   4; // cylinder
+Rr   4; // refinement zone
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+xc00    #calc "($xc)-$r0";
+xc01    #calc "($xc)+$r0";
+yc00    #calc "($yc)-$r0";
+yc01    #calc "($yc)+$r0";
+
+xc10    #calc "($xc)-$r1";
+xc11    #calc "($xc)+$r1";
+yc10    #calc "($yc)-$r1";
+yc11    #calc "($yc)+$r1";
+
+vertices
+(
+    // Background mesh
+    ($x0  $y0  $z0) // 0
+    ($x1  $y0  $z0) // 1
+    ($x1  $y1  $z0) // 2
+    ($x0  $y1  $z0) // 3
+    ($x0  $y0  $z1) // 4
+    ($x1  $y0  $z1) // 5
+    ($x1  $y1  $z1) // 6
+    ($x0  $y1  $z1) // 7
+
+    // Cylinder
+    ($xc01  $yc    $z0) // 8
+    ($xc    $yc01  $z0) // 9
+    ($xc00  $yc    $z0) // 10
+    ($xc    $yc00  $z0) // 11
+    ($xc01  $yc    $z1) // 12
+    ($xc    $yc01  $z1) // 13
+    ($xc00  $yc    $z1) // 14
+    ($xc    $yc00  $z1) // 15
+    
+    ($xc11  $yc    $z0) // 16
+    ($xc    $yc11  $z0) // 17
+    ($xc10  $yc    $z0) // 18
+    ($xc    $yc10  $z0) // 19
+    ($xc11  $yc    $z1) // 20
+    ($xc    $yc11  $z1) // 21
+    ($xc10  $yc    $z1) // 22
+    ($xc    $yc10  $z1) // 23
+    
+    // Refinement zone
+    ($xr0  $yr0  $z0) // 24
+    ($xr1  $yr0  $z0) // 25
+    ($xr1  $yr1  $z0) // 26
+    ($xr0  $yr1  $z0) // 27
+    ($xr0  $yr0  $z1) // 28
+    ($xr1  $yr0  $z1) // 29
+    ($xr1  $yr1  $z1) // 30
+    ($xr0  $yr1  $z1) // 31
+);
+
+nx  #calc "round($Rb*(($x1) - ($x0)))";
+ny  #calc "round($Rb*(($y1) - ($y0)))";
+
+nr  #calc "round(1.5*$Rc*($r1 - $r0))";
+nt  #calc "round(0.5*$pi*$r1*$Rc)";
+gr	2;
+
+nxr #calc "round($Rr*(($xr1) - ($xr0)))";
+nyr #calc "round($Rr*(($yr1) - ($yr0)))";
+
+blocks
+(
+    // Coarse background mesh
+    hex (0 1 2 3 4 5 6 7) background ($nx $ny 1) simpleGrading (1 1 1)
+    /*(
+    	(
+    		(0.3 0.2 0.125)
+			(0.2 0.4 1)
+			(0.5 0.4 6)
+    	)
+    	(
+    		(0.4 0.25 0.125)
+			(0.2 0.5 1)
+			(0.4 0.25 8)
+    	)
+    	1
+    )*/
+    
+	// Cylinder mesh blocks
+    hex ( 8 16 17  9 12 20 21 13) cylinder ($nr $nt 1) simpleGrading ($gr 1 1)
+    hex ( 9 17 18 10 13 21 22 14) cylinder ($nr $nt 1) simpleGrading ($gr 1 1)
+    hex (10 18 19 11 14 22 23 15) cylinder ($nr $nt 1) simpleGrading ($gr 1 1)
+    hex (11 19 16  8 15 23 20 12) cylinder ($nr $nt 1) simpleGrading ($gr 1 1)
+    
+    // Refined zone
+    //hex (24 25 26 27 28 29 30 31) refinedZone ($nxr $nyr 1) simpleGrading (1 1 1)
+);
+
+r0d  #calc "$r0/sqrt(2.0)";
+r1d  #calc "$r1/sqrt(2.0)";
+
+x0dp  #calc "$xc+$r0d";
+x0dn  #calc "$xc-$r0d";
+y0dp  #calc "$yc+$r0d";
+y0dn  #calc "$yc-$r0d";
+
+x1dp  #calc "$xc+$r1d";
+x1dn  #calc "$xc-$r1d";
+y1dp  #calc "$yc+$r1d";
+y1dn  #calc "$yc-$r1d";
+
+edges
+(
+	arc  8  9 ($x0dp $y0dp $z0)
+	arc  9 10 ($x0dn $y0dp $z0)
+	arc 10 11 ($x0dn $y0dn $z0)
+	arc 11  8 ($x0dp $y0dn $z0)
+	arc 12 13 ($x0dp $y0dp $z1)
+	arc 13 14 ($x0dn $y0dp $z1)
+	arc 14 15 ($x0dn $y0dn $z1)
+	arc 15 12 ($x0dp $y0dn $z1)
+	
+	arc 16 17 ($x1dp $y1dp $z0)
+	arc 17 18 ($x1dn $y1dp $z0)
+	arc 18 19 ($x1dn $y1dn $z0)
+	arc 19 16 ($x1dp $y1dn $z0)
+	arc 20 21 ($x1dp $y1dp $z1)
+	arc 21 22 ($x1dn $y1dp $z1)
+	arc 22 23 ($x1dn $y1dn $z1)
+	arc 23 20 ($x1dp $y1dn $z1)
+);
+
+boundary
+(
+    interface
+    {
+    	type		patch;
+    	faces
+    	(
+    		// cylinder
+    		(16 17 21 20)
+    		(17 18 22 21)
+    		(18 19 23 22)
+    		(19 16 20 23)
+    		
+    		// refined zone
+    		/*(24 28 31 27)
+    		(25 26 30 29)
+    		(26 27 31 30)
+    		(24 25 29 28)*/
+    	);
+    }
+    
+    left
+    {
+    	type        patch;
+    	faces
+    	(
+    		(0 4 7 3)
+    	);
+    }
+    
+    right
+    {
+    	type        patch;
+    	faces
+    	(
+    		(1 2 6 5)
+    	);
+    }
+    
+    top
+    {
+    	type        patch;
+    	faces
+    	(
+    		(2 3 7 6)
+    	);
+    }
+    
+    bottom
+    {
+    	type        patch;
+    	faces
+    	(
+    		(0 1 5 4)
+    	);
+    }
+    
+	front
+    {
+    	type        empty;
+    	faces
+    	(
+    		(4 5 6 7)
+    		(8 9 17 16)
+    		(9 10 18 17)
+    		(10 11 19 18)
+    		(11 8 16 19)
+    		//(24 27 26 25)
+    	);
+    }
+    
+    back
+    {
+    	type        empty;
+    	faces
+    	(
+    		(0 3 2 1)
+    		(20 21 13 12)
+    		(21 22 14 13)
+    		(22 23 15 14)
+    		(23 20 12 15)
+    		//(28 29 30 31)
+    	);
+    }
+    
+    walls
+    {
+    	type		wall;
+    	faces
+    	(
+    		(12 13 9 8)
+    		(13 14 10 9)
+    		(14 15 11 10)
+    		(15 12 8 11)
+    	);
+    }
+);
+
+// ************************************************************************* //

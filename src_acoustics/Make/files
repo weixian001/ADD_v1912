@@ -1,0 +1,24 @@
+rk=lowStorageRungeKuttaSchemes
+$(rk)/lowStorageRungeKuttaScheme.C
+$(rk)/LDDRK46/LDDRK46.C
+$(rk)/TVDRK3/TVDRK3.C
+
+spongeZones/spongeZones.C
+
+sp=dualRegionFvMesh/strFvMesh/spatialSchemes
+$(sp)/spatialScheme.C
+$(sp)/DRP7/DRP7.C
+$(sp)/DRP9/DRP9.C
+$(sp)/DRP11/DRP11.C
+
+fl=dualRegionFvMesh/strFvMesh/filterSchemes
+$(fl)/filterScheme.C
+$(fl)/SFo7p/SFo7p.C
+$(fl)/SFo9p/SFo9p.C
+$(fl)/SFo11p/SFo11p.C
+
+drMesh=dualRegionFvMesh
+$(drMesh)/strFvMesh/strFvMesh.C
+$(drMesh)/dualRegionFvMesh.C
+
+LIB = $(FOAM_USER_LIBBIN)/libacoustics

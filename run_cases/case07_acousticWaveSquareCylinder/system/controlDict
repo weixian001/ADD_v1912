@@ -1,0 +1,78 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     dualZoneBuoyantPimpleFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         1e-2;
+
+deltaT          2e-5;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1e-3;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  10;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+adjustTimeStep  false;
+
+maxCo           0.5;
+
+functions
+{
+    vMax
+    {
+        type            coded;
+        libs            ("libutilityFunctionObjects.so");
+        enabled         false;
+        name            vMax;
+        executeControl  timeStep;
+		region			nonLinearZone;
+        codeExecute
+        #{
+            volVectorField& U 
+            	= const_cast<volVectorField&>(mesh().lookupObject<volVectorField>("U"));
+
+            const scalar value0(max(mag(U.component(0))).value());
+            
+            Info<< "max(mag(u)) = " << value0 << endl;
+
+			const scalar value1(max(mag(U.component(1))).value());
+            
+            Info<< "max(mag(v)) = " << value1 << endl;
+            
+		#};
+	}
+}
+
+// ************************************************************************* //

@@ -1,0 +1,5 @@
+rk=lowStorageRungeKuttaSchemes
+sp=dualRegionFvMesh/strFvMesh/spatialSchemes
+fl=dualRegionFvMesh/strFvMesh/filterSchemes
+drMesh=dualRegionFvMesh
+LIB = $(FOAM_USER_LIBBIN)/libacoustics

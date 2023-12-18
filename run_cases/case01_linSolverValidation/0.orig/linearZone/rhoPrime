@@ -1,0 +1,85 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.4.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    location    "0/linearZone";
+    object      rhoPrime;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [1 -3 0 0 0 0 0];
+
+internalField   #codeStream
+{
+	codeInclude
+    #{
+        #include "fvCFD.H"
+    #};
+    
+    codeOptions
+    #{
+        -I$(LIB_SRC)/finiteVolume/lnInclude \
+        -I$(LIB_SRC)/meshTools/lnInclude
+    #};
+
+    code
+    #{
+        const IOdictionary& d = static_cast<const IOdictionary&>(dict);
+
+        const fvMesh& mesh = refCast<const fvMesh>(d.db());
+
+		// Pressure wave properties
+		const vector kp(1.0, 0.0, 0.0);                 // orientation
+		const vector xp(0.0, 0.0, 0.0);                 // location
+		const scalar ep(1e-2);                          // strength
+		const scalar ap(Foam::log(2.0)/Foam::sqr(3.0)); // width
+		
+		// Entropy wave properties
+		const vector ke(1.0, 0.0, 0.0);                 // orientation
+		const vector xe(200.0/3.0, 0.0, 0.0);           // location
+		const scalar ee(1e-3);                          // strength
+		const scalar ae(Foam::log(2.0)/Foam::sqr(5.0)); // width
+		
+		// Gas properties
+		const scalar R(1.0/1.4), gamma(1.4);
+
+		// Mean properties
+		const scalar TMean(1.0);
+
+		const scalar cSqrMean(gamma*R*TMean);
+		
+		// Density perturbation
+		const scalar rhoPrime(ep/cSqrMean);
+
+		scalarField rho(mesh.nCells(), 0.0);
+
+        forAll(rho, i)
+        {
+			const vector& xc = mesh.C().internalField()[i];
+
+			// Pressure wave
+			const scalar rp = (xc - xp) & kp;
+			
+			rho[i] += rhoPrime*Foam::exp(-ap*sqr(rp));
+			
+			// Entropy wave
+			const scalar re = (xc - xe) & ke;
+			
+			rho[i] += ee*Foam::exp(-ae*sqr(re));
+        }
+
+		rho.writeEntry("", os);
+	#};
+};
+
+#include "boundaryFile"
+
+// ************************************************************************* //

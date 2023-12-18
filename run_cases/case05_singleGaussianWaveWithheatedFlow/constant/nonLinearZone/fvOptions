@@ -1,0 +1,73 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v1906                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvOptions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+heatSource
+{
+    name			sourceTime;
+    
+    type            scalarCodedSource;
+
+    scalarCodedSourceCoeffs
+    {
+        selectionMode   all;
+
+        fields          (rhoEFlux);
+        name            sourceTime;
+
+        codeInclude
+        #{
+        #};
+
+        codeCorrect
+        #{
+            //Pout<< "**codeCorrect**" << endl;
+            
+            const scalar cp(2.5);
+			
+			// Ma: 3.00 -> 2.00
+			const scalar mDot(4.200), T01(2.8000), T02(3.39687787);
+
+			const scalar qDot(mDot*cp*(T02 - T01)); // J/s, heat addition rate
+			
+			const scalar qVol(1.0); // m^3, volume of heating region
+			
+			const scalar dq(qDot/qVol); // (J/s)/m^3, average heat addition rate
+			
+			// Properties of the Gaussian profile
+			const scalar a(2.0), c(1./(a*Foam::sqrt(Foam::constant::mathematical::pi)));
+			
+			forAll(fld, celli)
+			{
+				const scalar& x = fld.mesh().C()[celli][0];
+				
+				fld[celli] += dq*c*Foam::exp(-sqr(x/a));
+			}
+        #};
+
+        codeAddSup
+        #{
+            Pout<< "**codeAddSup**" << endl;
+        #};
+
+        codeConstrain
+        #{
+            Pout<< "**codeConstrain**" << endl;
+        #};
+    }
+
+}
+
+// ************************************************************************* //
